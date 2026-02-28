@@ -1,0 +1,34 @@
+# ════════════════════════════════════════════
+# Trademind — .gitignore
+# ════════════════════════════════════════════
+
+# config.js GitHub वर SAFE आहे (publishable/anon key आहे)
+# Secret key असेल तरच खालील uncomment करा:
+# config.js
+
+# कधीच commit करू नका:
+.env
+.env.local
+.env.production
+*.secret
+secrets.json
+
+# Node
+node_modules/
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+
+# Mobile (future)
+android/
+ios/
+*.apk
+*.aab
+*.keystore
+*.jks
