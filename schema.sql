@@ -1,20 +1,14 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-DROP TABLE IF EXISTS public.rules CASCADE;
-DROP TABLE IF EXISTS public.journals CASCADE;
-DROP TABLE IF EXISTS public.trades CASCADE;
-DROP TABLE IF EXISTS public.admin_settings CASCADE;
-DROP TABLE IF EXISTS public.profiles CASCADE;
-
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id                  UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name           TEXT,
   email               TEXT NOT NULL UNIQUE,
-  plan                TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free','pending','pro','trial')),
+  plan                TEXT NOT NULL DEFAULT 'free',
   subscribed_at       TIMESTAMPTZ,
   razorpay_payment_id TEXT,
   approved_by         TEXT,
-  role                TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin')),
+  role                TEXT NOT NULL DEFAULT 'user',
   wolf_rank           TEXT DEFAULT 'Cub',
   wolf_xp             INT DEFAULT 0,
   streak              INT DEFAULT 0,
@@ -23,13 +17,13 @@ CREATE TABLE public.profiles (
   updated_at          TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE public.trades (
+CREATE TABLE IF NOT EXISTS public.trades (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id     UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   date        DATE NOT NULL,
   symbol      TEXT NOT NULL,
   setup       TEXT,
-  side        TEXT CHECK (side IN ('LONG','SHORT')),
+  side        TEXT,
   entry       NUMERIC(12,2) NOT NULL,
   exit        NUMERIC(12,2) NOT NULL,
   qty         NUMERIC(12,2) NOT NULL,
@@ -42,17 +36,17 @@ CREATE TABLE public.trades (
   disc_score  NUMERIC(5,2),
   violated    TEXT[],
   exec_notes  TEXT,
-  confidence  INT CHECK (confidence BETWEEN 1 AND 10),
-  focus       INT CHECK (focus BETWEEN 1 AND 10),
-  patience    INT CHECK (patience BETWEEN 1 AND 10),
-  calm        INT CHECK (calm BETWEEN 1 AND 10),
+  confidence  INT,
+  focus       INT,
+  patience    INT,
+  calm        INT,
   emotion     TEXT,
   psych_notes TEXT,
   lesson      TEXT,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE public.journals (
+CREATE TABLE IF NOT EXISTS public.journals (
   id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id    UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   date       DATE NOT NULL,
@@ -62,7 +56,7 @@ CREATE TABLE public.journals (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE public.rules (
+CREATE TABLE IF NOT EXISTS public.rules (
   id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id    UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   rule       TEXT NOT NULL,
@@ -70,7 +64,7 @@ CREATE TABLE public.rules (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE public.admin_settings (
+CREATE TABLE IF NOT EXISTS public.admin_settings (
   id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   key        TEXT NOT NULL UNIQUE,
   value      TEXT,
@@ -84,13 +78,26 @@ INSERT INTO public.admin_settings (key, value) VALUES
   ('price_first',     '99'),
   ('price_monthly',   '299'),
   ('platform_name',   'TradeMind'),
-  ('platform_version','1.0');
+  ('platform_version','1.0')
+ON CONFLICT (key) DO NOTHING;
 
-ALTER TABLE public.profiles        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.trades          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.journals        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.rules           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.admin_settings  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.trades         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.journals       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rules          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_settings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "user_own_profile_select"    ON public.profiles;
+DROP POLICY IF EXISTS "user_own_profile_update"    ON public.profiles;
+DROP POLICY IF EXISTS "admin_all_profiles_select"  ON public.profiles;
+DROP POLICY IF EXISTS "admin_all_profiles_update"  ON public.profiles;
+DROP POLICY IF EXISTS "admin_all_profiles_delete"  ON public.profiles;
+DROP POLICY IF EXISTS "user_own_trades"            ON public.trades;
+DROP POLICY IF EXISTS "admin_all_trades_select"    ON public.trades;
+DROP POLICY IF EXISTS "user_own_journals"          ON public.journals;
+DROP POLICY IF EXISTS "user_own_rules"             ON public.rules;
+DROP POLICY IF EXISTS "authenticated_read_settings"ON public.admin_settings;
+DROP POLICY IF EXISTS "admin_write_settings"       ON public.admin_settings;
 
 CREATE POLICY "user_own_profile_select" ON public.profiles
   FOR SELECT USING (auth.uid() = id);
@@ -173,17 +180,21 @@ CREATE TRIGGER profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at();
 
-DROP TRIGGER IF EXISTS admin_settings_updated_at ON public.admin_settings;
-CREATE TRIGGER admin_settings_updated_at
-  BEFORE UPDATE ON public.admin_settings
-  FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at();
+CREATE INDEX IF NOT EXISTS idx_trades_user_id  ON public.trades(user_id);
+CREATE INDEX IF NOT EXISTS idx_trades_date      ON public.trades(date DESC);
+CREATE INDEX IF NOT EXISTS idx_journals_user_id ON public.journals(user_id);
+CREATE INDEX IF NOT EXISTS idx_rules_user_id    ON public.rules(user_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_plan    ON public.profiles(plan);
+CREATE INDEX IF NOT EXISTS idx_profiles_role    ON public.profiles(role);
 
-CREATE INDEX IF NOT EXISTS idx_trades_user_id    ON public.trades(user_id);
-CREATE INDEX IF NOT EXISTS idx_trades_date        ON public.trades(date DESC);
-CREATE INDEX IF NOT EXISTS idx_trades_pnl         ON public.trades(pnl);
-CREATE INDEX IF NOT EXISTS idx_journals_user_id   ON public.journals(user_id);
-CREATE INDEX IF NOT EXISTS idx_journals_date      ON public.journals(date DESC);
-CREATE INDEX IF NOT EXISTS idx_rules_user_id      ON public.rules(user_id);
-CREATE INDEX IF NOT EXISTS idx_profiles_plan      ON public.profiles(plan);
-CREATE INDEX IF NOT EXISTS idx_profiles_role      ON public.profiles(role);
-CREATE INDEX IF NOT EXISTS idx_admin_settings_key ON public.admin_settings(key);
+INSERT INTO public.profiles (id, full_name, email, plan, role)
+SELECT
+  id,
+  'Admin',
+  email,
+  'pro',
+  'admin'
+FROM auth.users
+WHERE email = 'ficusagentai@gmail.com'
+ON CONFLICT (id) DO UPDATE
+SET role = 'admin', plan = 'pro', full_name = 'Admin';
