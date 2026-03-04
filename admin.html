@@ -269,7 +269,7 @@ td.bold{color:var(--text);font-weight:700;}
   </nav>
   <div class="sb-footer">
     <button class="theme-btn" onclick="toggleTheme()"><span id="theme-ic">🌙</span><span id="theme-lbl">Dark Mode</span></button>
-    <div class="sb-admin"><strong>Administrator</strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7110151c181f310503101514171d1e065f181f">[email&#160;protected]</a></div>
+    <div class="sb-admin"><strong>Administrator</strong>ficusagentai@gmail.com</div>
     <button class="logout-btn" onclick="doLogout()">🚪 Logout</button>
   </div>
 </aside>
@@ -336,8 +336,6 @@ td.bold{color:var(--text);font-weight:700;}
 
     <!-- ════ SUBSCRIPTIONS ════ -->
     <div class="page" id="page-subscriptions">
-
-      <!-- MODEL BANNER -->
       <div class="sub-banner">
         <div>
           <div style="font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">SUBSCRIPTION MODEL</div>
@@ -350,40 +348,18 @@ td.bold{color:var(--text);font-weight:700;}
           <div class="sbp-item"><div class="sbp-amt" style="color:var(--g1);">₹299</div><div class="sbp-label">Monthly</div></div>
         </div>
       </div>
-
-      <!-- PAYMENT METHODS -->
       <div class="pm-grid">
-        <div class="pm-card">
-          <div class="pm-icon">💬</div>
-          <div class="pm-name">WhatsApp Pay</div>
-          <div class="pm-number">+91 9987961609</div>
-        </div>
-        <div class="pm-card">
-          <div class="pm-icon">💙</div>
-          <div class="pm-name">Paytm</div>
-          <div class="pm-number">9987961609@paytm</div>
-        </div>
-        <div class="pm-card">
-          <div class="pm-icon">🟢</div>
-          <div class="pm-name">PhonePe</div>
-          <div class="pm-number">9987961609@ybl</div>
-        </div>
-        <div class="pm-card">
-          <div class="pm-icon">🔵</div>
-          <div class="pm-name">Google Pay</div>
-          <div class="pm-number">9987961609@okaxis</div>
-        </div>
+        <div class="pm-card"><div class="pm-icon">💬</div><div class="pm-name">WhatsApp Pay</div><div class="pm-number">+91 9987961609</div></div>
+        <div class="pm-card"><div class="pm-icon">💙</div><div class="pm-name">Paytm</div><div class="pm-number">9987961609@paytm</div></div>
+        <div class="pm-card"><div class="pm-icon">🟢</div><div class="pm-name">PhonePe</div><div class="pm-number">9987961609@ybl</div></div>
+        <div class="pm-card"><div class="pm-icon">🔵</div><div class="pm-name">Google Pay</div><div class="pm-number">9987961609@okaxis</div></div>
       </div>
-
-      <!-- STATS -->
       <div class="stat-grid">
         <div class="stat-card sc-g"><div class="sc-label">Active Pro</div><div class="sc-val g" id="sub-active">0</div><div class="sc-sub">paying subscribers</div></div>
         <div class="stat-card sc-a"><div class="sc-label">Pending Approval</div><div class="sc-val a" id="sub-pending">0</div><div class="sc-sub">awaiting review</div></div>
         <div class="stat-card sc-b"><div class="sc-label">MRR (est.)</div><div class="sc-val b" id="sub-mrr">₹0</div><div class="sc-sub">monthly recurring</div></div>
         <div class="stat-card sc-b"><div class="sc-label">ARR (proj.)</div><div class="sc-val b" id="sub-arr">₹0</div><div class="sc-sub">annual projection</div></div>
       </div>
-
-      <!-- PENDING APPROVALS -->
       <div class="table-wrap" style="border-color:rgba(196,122,10,.35);">
         <div class="table-head" style="background:rgba(196,122,10,.05);">
           <span class="table-title" style="color:var(--amber);">⚡ Pending — Verify Payment & Approve</span>
@@ -396,8 +372,6 @@ td.bold{color:var(--text);font-weight:700;}
           <tbody id="pending-tbody"></tbody>
         </table>
       </div>
-
-      <!-- ALL SUBSCRIPTIONS -->
       <div class="table-wrap">
         <div class="table-head">
           <span class="table-title">All Subscriptions</span>
@@ -415,8 +389,6 @@ td.bold{color:var(--text);font-weight:700;}
           <tbody id="subs-tbody"></tbody>
         </table>
       </div>
-
-      <!-- QUICK ACTIONS -->
       <div class="card">
         <div class="card-title">Quick Actions</div>
         <div style="display:flex;gap:9px;flex-wrap:wrap;">
@@ -501,10 +473,10 @@ td.bold{color:var(--text);font-weight:700;}
       </div>
     </div>
 
-  </div><!-- /content -->
-</div><!-- /main-area -->
-</div><!-- /layout -->
-</div><!-- /app -->
+  </div>
+</div>
+</div>
+</div>
 
 <!-- USER DETAIL MODAL -->
 <div class="modal-overlay" id="user-modal">
@@ -533,9 +505,6 @@ td.bold{color:var(--text);font-weight:700;}
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
-// ════════════════════════════════════════════════════════
-// SUPABASE INIT
-// ════════════════════════════════════════════════════════
 const { createClient } = supabase;
 const sb = createClient(TF_CONFIG.SUPABASE_URL, TF_CONFIG.SUPABASE_ANON);
 
@@ -560,165 +529,179 @@ function updateThemeUI(t) {
 }
 
 // ════════════════════════════════════════════════════════
-// ADMIN AUTH — Supabase (email + role=admin check)
+// FIXED doLogin — uses get_my_role() RPC (bypasses RLS)
 // ════════════════════════════════════════════════════════
 async function doLogin() {
-  const email=document.getElementById('admin-user').value.trim();
-  const pass=document.getElementById('admin-pass').value;
-  const err=document.getElementById('login-err');
-  const btn=document.querySelector('.login-btn');
-  if(btn){btn.disabled=true;btn.textContent='Signing in...';}
+  const email = document.getElementById('admin-user').value.trim();
+  const pass  = document.getElementById('admin-pass').value;
+  const err   = document.getElementById('login-err');
+  const btn   = document.querySelector('.login-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Signing in...'; }
+
   try {
-    const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error)throw error;
-    const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',data.user.id).single();
-    if(!prof||prof.role!=='admin'){
+    // Step 1: Supabase Auth sign-in
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+
+    // Step 2: Use SECURITY DEFINER RPC to get role (bypasses RLS deadlock)
+    const { data: roleData, error: roleErr } = await sb.rpc('get_my_role');
+
+    let role = roleData;
+
+    // Fallback: try direct profile select (works if RLS fixed)
+    if (roleErr || !role) {
+      const { data: prof } = await sb.from('profiles').select('role').eq('id', data.user.id).single();
+      role = prof?.role;
+    }
+
+    if (role !== 'admin') {
       await sb.auth.signOut();
-      err.textContent='Access denied — admin only.'; err.style.display='block';
-      setTimeout(()=>err.style.display='none',3000);
-      if(btn){btn.disabled=false;btn.textContent='Access Admin Panel →';}
+      err.textContent = 'Access denied — admin only.';
+      err.style.display = 'block';
+      setTimeout(() => err.style.display = 'none', 3000);
+      if (btn) { btn.disabled = false; btn.textContent = 'Access Admin Panel →'; }
       return;
     }
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    startClock(); await loadAll();
-    nav('overview',document.querySelector('.nav-btn'));
+
+    // Step 3: Success — show admin panel
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    startClock();
+    await loadAll();
+    nav('overview', document.querySelector('.nav-btn'));
+
   } catch(e) {
-    err.textContent='Invalid email or password.'; err.style.display='block';
-    setTimeout(()=>err.style.display='none',3000);
-    if(btn){btn.disabled=false;btn.textContent='Access Admin Panel →';}
+    err.textContent = 'Invalid email or password.';
+    err.style.display = 'block';
+    setTimeout(() => err.style.display = 'none', 3000);
+    if (btn) { btn.disabled = false; btn.textContent = 'Access Admin Panel →'; }
   }
 }
-document.addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none')doLogin();
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
 });
+
 async function doLogout() {
   await sb.auth.signOut();
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('app').style.display='none';
-  document.getElementById('admin-user').value='';
-  document.getElementById('admin-pass').value='';
-}
-function startClock() {
-  const tick=()=>document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-IN');
-  tick(); setInterval(tick,1000);
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('admin-user').value = '';
+  document.getElementById('admin-pass').value = '';
 }
 
-// ════════════════════════════════════════════════════════
-// DATA LOAD
-// ════════════════════════════════════════════════════════
+function startClock() {
+  const tick = () => document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-IN');
+  tick(); setInterval(tick, 1000);
+}
+
 async function loadAll() {
-  const [pr,tr]=await Promise.all([
-    sb.from('profiles').select('*').order('created_at',{ascending:false}),
-    sb.from('trades').select('*, profiles(name,email)').order('date',{ascending:false})
+  const [pr, tr] = await Promise.all([
+    sb.from('profiles').select('*').order('created_at', { ascending: false }),
+    sb.from('trades').select('*, profiles(name,email)').order('date', { ascending: false })
   ]);
-  ALL_USERS = pr.data||[];
-  ALL_TRADES = (tr.data||[]).map(t=>({
-    ...t, pnl:Math.round(parseFloat(t.pnl||0)),
-    discScore:parseFloat(t.disc_score||0), violated:t.violated||[],
-    _user:t.profiles?.name||'—', _email:t.profiles?.email||'—'
+  ALL_USERS = pr.data || [];
+  ALL_TRADES = (tr.data || []).map(t => ({
+    ...t, pnl: Math.round(parseFloat(t.pnl || 0)),
+    discScore: parseFloat(t.disc_score || 0), violated: t.violated || [],
+    _user: t.profiles?.name || '—', _email: t.profiles?.email || '—'
   }));
 }
-function getUsers(){ return ALL_USERS; }
-function getUserTrades(uid){ return ALL_TRADES.filter(t=>t.user_id===uid); }
-function getAllTrades(){ return ALL_TRADES; }
 
-// ════════════════════════════════════════════════════════
-// USER ACTIONS
-// ════════════════════════════════════════════════════════
+function getUsers() { return ALL_USERS; }
+function getUserTrades(uid) { return ALL_TRADES.filter(t => t.user_id === uid); }
+function getAllTrades() { return ALL_TRADES; }
+
 async function grantPro(uid) {
-  const {error}=await sb.from('profiles').update({plan:'pro',subscribed_at:new Date().toISOString(),approved_by:'admin'}).eq('id',uid);
-  if(error){toast('❌ '+error.message,'e');return;}
-  const u=ALL_USERS.find(x=>x.id===uid); if(u){u.plan='pro';u.subscribed_at=new Date().toISOString();}
-  toast('✅ Pro granted to '+u?.name,'s'); renderUsers(); renderSubs();
+  const { error } = await sb.from('profiles').update({ plan: 'pro', subscribed_at: new Date().toISOString(), approved_by: 'admin' }).eq('id', uid);
+  if (error) { toast('❌ ' + error.message, 'e'); return; }
+  const u = ALL_USERS.find(x => x.id === uid); if (u) { u.plan = 'pro'; u.subscribed_at = new Date().toISOString(); }
+  toast('✅ Pro granted to ' + u?.name, 's'); renderUsers(); renderSubs();
 }
 async function revokePro(uid) {
-  const {error}=await sb.from('profiles').update({plan:'free'}).eq('id',uid);
-  if(error){toast('❌ '+error.message,'e');return;}
-  const u=ALL_USERS.find(x=>x.id===uid); if(u)u.plan='free';
-  toast('Pro revoked','i'); renderUsers(); renderSubs();
+  const { error } = await sb.from('profiles').update({ plan: 'free' }).eq('id', uid);
+  if (error) { toast('❌ ' + error.message, 'e'); return; }
+  const u = ALL_USERS.find(x => x.id === uid); if (u) u.plan = 'free';
+  toast('Pro revoked', 'i'); renderUsers(); renderSubs();
 }
 async function sendWelcomeResetEmail(email) {
   try {
-    const {error} = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://trademind.shop/?welcome=1'
-    });
-    if(error) console.warn('Email error:', error.message);
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://trademind.shop/?welcome=1' });
+    if (error) console.warn('Email error:', error.message);
   } catch(e) { console.warn(e); }
 }
 async function approvePending(uid) {
-  const {error}=await sb.from('profiles').update({plan:'pro',subscribed_at:new Date().toISOString(),approved_by:'admin'}).eq('id',uid);
-  if(error){toast('❌ '+error.message,'e');return;}
-  const u=ALL_USERS.find(x=>x.id===uid); if(u){u.plan='pro';u.subscribed_at=new Date().toISOString();}
-  if(u?.email) await sendWelcomeResetEmail(u.email);
-  toast('✅ '+u?.name+' approved! Email sent 📧','s'); renderSubs();
+  const { error } = await sb.from('profiles').update({ plan: 'pro', subscribed_at: new Date().toISOString(), approved_by: 'admin' }).eq('id', uid);
+  if (error) { toast('❌ ' + error.message, 'e'); return; }
+  const u = ALL_USERS.find(x => x.id === uid); if (u) { u.plan = 'pro'; u.subscribed_at = new Date().toISOString(); }
+  if (u?.email) await sendWelcomeResetEmail(u.email);
+  toast('✅ ' + u?.name + ' approved! Email sent 📧', 's'); renderSubs();
 }
 async function bulkApprove() {
-  const pending=ALL_USERS.filter(u=>u.plan==='pending');
-  if(!pending.length){toast('No pending users','i');return;}
-  const ids=pending.map(u=>u.id);
-  await sb.from('profiles').update({plan:'pro',subscribed_at:new Date().toISOString(),approved_by:'admin'}).in('id',ids);
-  pending.forEach(u=>{u.plan='pro';u.subscribed_at=new Date().toISOString();});
-  toast('✅ '+pending.length+' approved!','s'); renderSubs();
+  const pending = ALL_USERS.filter(u => u.plan === 'pending');
+  if (!pending.length) { toast('No pending users', 'i'); return; }
+  const ids = pending.map(u => u.id);
+  await sb.from('profiles').update({ plan: 'pro', subscribed_at: new Date().toISOString(), approved_by: 'admin' }).in('id', ids);
+  pending.forEach(u => { u.plan = 'pro'; u.subscribed_at = new Date().toISOString(); });
+  toast('✅ ' + pending.length + ' approved!', 's'); renderSubs();
 }
-async function deleteUser(uid,name) {
-  if(!confirm('Delete '+name+'? All their data will be deleted.'))return;
-  const {error}=await sb.from('profiles').delete().eq('id',uid);
-  if(error){toast('❌ '+error.message,'e');return;}
-  ALL_USERS=ALL_USERS.filter(u=>u.id!==uid);
-  ALL_TRADES=ALL_TRADES.filter(t=>t.user_id!==uid);
-  toast(name+' deleted','e'); renderUsers(); renderSubs(); renderOverview();
+async function deleteUser(uid, name) {
+  if (!confirm('Delete ' + name + '? All their data will be deleted.')) return;
+  const { error } = await sb.from('profiles').delete().eq('id', uid);
+  if (error) { toast('❌ ' + error.message, 'e'); return; }
+  ALL_USERS = ALL_USERS.filter(u => u.id !== uid);
+  ALL_TRADES = ALL_TRADES.filter(t => t.user_id !== uid);
+  toast(name + ' deleted', 'e'); renderUsers(); renderSubs(); renderOverview();
 }
 async function changePass() {
-  const curr=document.getElementById('cp-curr')?.value;
-  const nw=document.getElementById('cp-new')?.value;
-  if(!curr||!nw){toast('⚠️ Fill both fields','e');return;}
-  if(nw.length<8){toast('Min 8 characters','e');return;}
-  const {error}=await sb.auth.updateUser({password:nw});
-  if(error){toast('❌ '+error.message,'e');return;}
-  document.getElementById('cp-curr').value='';
-  document.getElementById('cp-new').value='';
-  toast('✅ Password updated!','s');
+  const curr = document.getElementById('cp-curr')?.value;
+  const nw = document.getElementById('cp-new')?.value;
+  if (!curr || !nw) { toast('⚠️ Fill both fields', 'e'); return; }
+  if (nw.length < 8) { toast('Min 8 characters', 'e'); return; }
+  const { error } = await sb.auth.updateUser({ password: nw });
+  if (error) { toast('❌ ' + error.message, 'e'); return; }
+  document.getElementById('cp-curr').value = '';
+  document.getElementById('cp-new').value = '';
+  toast('✅ Password updated!', 's');
 }
 async function wipeAll() {
-  if(!confirm('⚠️ This will DELETE all user data permanently. Are you sure?'))return;
-  if(!confirm('FINAL WARNING: All trades, journals, rules, profiles will be deleted. Type OK to confirm.'))return;
+  if (!confirm('⚠️ This will DELETE all user data permanently. Are you sure?')) return;
+  if (!confirm('FINAL WARNING: All trades, journals, rules, profiles will be deleted. Type OK to confirm.')) return;
   try {
-    // Delete in correct order (foreign key constraints)
     await sb.from('trades').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     await sb.from('journals').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     await sb.from('rules').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    ALL_USERS=[]; ALL_TRADES=[]; renderOverview(); renderUsers();
-    toast('⚠️ All data wiped (profiles preserved — delete from Supabase Auth manually)','e');
-  } catch(e) { toast('❌ Error: '+e.message,'e'); }
+    ALL_USERS = []; ALL_TRADES = []; renderOverview(); renderUsers();
+    toast('⚠️ All data wiped', 'e');
+  } catch(e) { toast('❌ Error: ' + e.message, 'e'); }
 }
 function openGrantModal() {
-  document.getElementById('cm-title').textContent='Manually Grant Pro';
-  document.getElementById('cm-body').innerHTML='Enter user email:';
-  document.getElementById('cm-extra').innerHTML=`<input type="email" id="grant-email" placeholder="user@example.com" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r2);color:var(--text);font-family:var(--fb);font-size:13px;outline:none;margin-top:8px;">`;
-  document.getElementById('cm-ok').textContent='Grant Pro';
-  document.getElementById('cm-ok').className='btn btn-p';
-  document.getElementById('cm-ok').onclick=async()=>{
-    const email=document.getElementById('grant-email')?.value?.trim()?.toLowerCase();
-    if(!email)return;
-    const u=ALL_USERS.find(x=>x.email===email);
-    if(!u){toast('User not found','e');return;}
+  document.getElementById('cm-title').textContent = 'Manually Grant Pro';
+  document.getElementById('cm-body').innerHTML = 'Enter user email:';
+  document.getElementById('cm-extra').innerHTML = `<input type="email" id="grant-email" placeholder="user@example.com" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r2);color:var(--text);font-family:var(--fb);font-size:13px;outline:none;margin-top:8px;">`;
+  document.getElementById('cm-ok').textContent = 'Grant Pro';
+  document.getElementById('cm-ok').className = 'btn btn-p';
+  document.getElementById('cm-ok').onclick = async () => {
+    const email = document.getElementById('grant-email')?.value?.trim()?.toLowerCase();
+    if (!email) return;
+    const u = ALL_USERS.find(x => x.email === email);
+    if (!u) { toast('User not found', 'e'); return; }
     await grantPro(u.id); closeM('confirm-modal');
   };
   openM('confirm-modal');
 }
 function exportSubs() {
-  const rows=[['Name','Email','Plan','Subscribed','Payment ID'],
-    ...ALL_USERS.filter(u=>u.plan==='pro'||u.plan==='pending').map(u=>[u.name,u.email,u.plan,u.subscribed_at||'',u.razorpay_payment_id||''])];
-  const csv=rows.map(r=>r.join(',')).join('\n');
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download='subscribers.csv'; a.click(); toast('Exported CSV','s');
+  const rows = [['Name', 'Email', 'Plan', 'Subscribed', 'Payment ID'],
+    ...ALL_USERS.filter(u => u.plan === 'pro' || u.plan === 'pending').map(u => [u.name, u.email, u.plan, u.subscribed_at || '', u.razorpay_payment_id || ''])];
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'subscribers.csv'; a.click(); toast('Exported CSV', 's');
 }
-function copyUPI(){navigator.clipboard.writeText('9987961609@paytm').catch(()=>{}); toast('📋 UPI copied!','s');}
+function copyUPI() { navigator.clipboard.writeText('9987961609@paytm').catch(() => {}); toast('📋 UPI copied!', 's'); }
 async function exportAll() {
-  const blob=new Blob([JSON.stringify({users:ALL_USERS,trades:ALL_TRADES,at:new Date().toISOString()},null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='trademind-export.json'; a.click();
-  toast('Exported','s');
+  const blob = new Blob([JSON.stringify({ users: ALL_USERS, trades: ALL_TRADES, at: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'trademind-export.json'; a.click();
+  toast('Exported', 's');
 }
 function wolfStage(score) {
   if (score >= 85) return { label: 'Legendary', emoji: '🏆', cls: 'bg-a' };
@@ -731,12 +714,11 @@ function planBadge(plan) {
   if (plan === 'pending') return '<span class="badge bg-a">PENDING</span>';
   return '<span class="badge bg-m">FREE</span>';
 }
-function fmtDate(d) { if (!d) return '—'; try { return new Date(d).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'2-digit'}); } catch(e) { return '—'; } }
+function fmtDate(d) { if (!d) return '—'; try { return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }); } catch(e) { return '—'; } }
 function fmtMoney(n) { return '₹' + Math.abs(n).toLocaleString('en-IN'); }
-function avgDisc(trades) { if (!trades.length) return 0; return trades.reduce((a,t) => a + (t.discScore||0), 0) / trades.length; }
+function avgDisc(trades) { if (!trades.length) return 0; return trades.reduce((a, t) => a + (t.discScore || 0), 0) / trades.length; }
 
-// ── NAVIGATION ──
-const PAGE_TITLES = {overview:'Overview',users:'Users',subscriptions:'Subscriptions',trades:'All Trades',wolf:'Wolf Rankings',revenue:'Revenue',settings:'Settings'};
+const PAGE_TITLES = { overview: 'Overview', users: 'Users', subscriptions: 'Subscriptions', trades: 'All Trades', wolf: 'Wolf Rankings', revenue: 'Revenue', settings: 'Settings' };
 function nav(name, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -744,301 +726,139 @@ function nav(name, btn) {
   if (el) el.classList.add('active');
   if (btn) btn.classList.add('active');
   document.getElementById('pg-title').textContent = PAGE_TITLES[name] || name;
-  const renders = {overview: renderOverview, users: renderUsers, subscriptions: renderSubs, trades: renderTrades, wolf: renderWolf, revenue: renderRevenue, settings: ()=>{}};
+  const renders = { overview: renderOverview, users: renderUsers, subscriptions: renderSubs, trades: renderTrades, wolf: renderWolf, revenue: renderRevenue, settings: () => {} };
   if (renders[name]) renders[name]();
 }
-
-// ── FILTERS ──
 function setF(type, val, btn) {
-  if (type === 'u') { uFilt = val; document.querySelectorAll('#page-users .ftab').forEach(b => b.classList.remove('active')); if(btn)btn.classList.add('active'); renderUsers(); }
-  if (type === 's') { sFilt = val; document.querySelectorAll('#page-subscriptions .ftab').forEach(b => b.classList.remove('active')); if(btn)btn.classList.add('active'); renderSubs(); }
+  if (type === 'u') { uFilt = val; document.querySelectorAll('#page-users .ftab').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active'); renderUsers(); }
+  if (type === 's') { sFilt = val; document.querySelectorAll('#page-subscriptions .ftab').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active'); renderSubs(); }
 }
 
-// ═══════════════════════════════
-// RENDER — OVERVIEW
-// ═══════════════════════════════
 function renderOverview() {
-  const users = getUsers();
-  const allTrades = getAllTrades();
-  const pro = users.filter(u => u.plan === 'pro');
-  const mrr = pro.length * 299;
+  const users = getUsers(); const allTrades = getAllTrades();
+  const pro = users.filter(u => u.plan === 'pro'); const mrr = pro.length * 299;
   document.getElementById('ov-users').textContent = users.length;
   document.getElementById('ov-pro').textContent = pro.length;
   document.getElementById('ov-trades').textContent = allTrades.length;
   document.getElementById('ov-mrr').textContent = '₹' + mrr.toLocaleString('en-IN');
   const disc = allTrades.length ? Math.round(avgDisc(allTrades)) : 0;
   document.getElementById('ov-disc').textContent = allTrades.length ? disc + '%' : '—';
-
-  // Recent signups
-  const recent=[...users].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,8);
-  document.getElementById('ov-signups').innerHTML=recent.length?recent.map(u=>`<tr>
-    <td class="bold">${u.name}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td><td>${fmtDate(u.created_at)}</td>
-  </tr>`).join(''):'<tr><td colspan="4"><div class="empty-state"><div class="esi">👥</div>No users yet</div></td></tr>';
-
-  // Plan distribution
-  const pending = users.filter(u => u.plan === 'pending');
-  const free = users.filter(u => !u.plan || u.plan === 'free' || u.plan === 'pending');
-  const total = users.length || 1;
+  const recent = [...users].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 8);
+  document.getElementById('ov-signups').innerHTML = recent.length ? recent.map(u => `<tr><td class="bold">${u.name}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td><td>${fmtDate(u.created_at)}</td></tr>`).join('') : '<tr><td colspan="4"><div class="empty-state"><div class="esi">👥</div>No users yet</div></td></tr>';
+  const pending = users.filter(u => u.plan === 'pending'); const total = users.length || 1;
   const dist = [
-    {label:'Pro',count:pro.length,color:'var(--g1)',pct:Math.round(pro.length/total*100)},
-    {label:'Pending',count:pending.length,color:'var(--amber)',pct:Math.round(pending.length/total*100)},
-    {label:'Free',count:users.filter(u=>u.plan==='free'||!u.plan).length,color:'var(--muted)',pct:Math.round(users.filter(u=>u.plan==='free'||!u.plan).length/total*100)},
+    { label: 'Pro', count: pro.length, color: 'var(--g1)', pct: Math.round(pro.length / total * 100) },
+    { label: 'Pending', count: pending.length, color: 'var(--amber)', pct: Math.round(pending.length / total * 100) },
+    { label: 'Free', count: users.filter(u => u.plan === 'free' || !u.plan).length, color: 'var(--muted)', pct: Math.round(users.filter(u => u.plan === 'free' || !u.plan).length / total * 100) },
   ];
-  document.getElementById('ov-plan-dist').innerHTML = dist.map(d => `
-    <div class="prog-row"><div class="prog-hd"><span style="font-size:12px;">${d.label} <span style="color:var(--muted);font-size:10px;">(${d.count})</span></span><span style="font-size:11px;color:var(--muted);">${d.pct}%</span></div>
-    <div class="prog-track"><div class="prog-fill" style="width:${d.pct}%;background:${d.color};"></div></div></div>`).join('');
-
-  // Stats
+  document.getElementById('ov-plan-dist').innerHTML = dist.map(d => `<div class="prog-row"><div class="prog-hd"><span style="font-size:12px;">${d.label} <span style="color:var(--muted);font-size:10px;">(${d.count})</span></span><span style="font-size:11px;color:var(--muted);">${d.pct}%</span></div><div class="prog-track"><div class="prog-fill" style="width:${d.pct}%;background:${d.color};"></div></div></div>`).join('');
   document.getElementById('ov-avg').textContent = users.length ? (allTrades.length / users.length).toFixed(1) : '—';
   const wins = allTrades.filter(t => t.pnl > 0).length;
   document.getElementById('ov-wr').textContent = allTrades.length ? Math.round(wins / allTrades.length * 100) + '%' : '—';
-  const avgExec = allTrades.length ? Math.round(allTrades.reduce((a,t) => a + ((11-(t.violated||[]).length)/11*100), 0) / allTrades.length) : 0;
+  const avgExec = allTrades.length ? Math.round(allTrades.reduce((a, t) => a + ((11 - (t.violated || []).length) / 11 * 100), 0) / allTrades.length) : 0;
   document.getElementById('ov-exec').textContent = allTrades.length ? avgExec + '%' : '—';
-  const setupMap = {}; allTrades.forEach(t => { if(t.setup) setupMap[t.setup] = (setupMap[t.setup]||0)+1; });
-  const topSetup = Object.entries(setupMap).sort((a,b)=>b[1]-a[1])[0];
+  const setupMap = {}; allTrades.forEach(t => { if (t.setup) setupMap[t.setup] = (setupMap[t.setup] || 0) + 1; });
+  const topSetup = Object.entries(setupMap).sort((a, b) => b[1] - a[1])[0];
   document.getElementById('ov-setup').textContent = topSetup ? topSetup[0] : '—';
 }
 
-// ═══════════════════════════════
-// RENDER — USERS
-// ═══════════════════════════════
 function renderUsers() {
-  const q=(document.getElementById('user-q')?.value||'').toLowerCase();
-  let users=getUsers();
-  if(uFilt==='pro')users=users.filter(u=>u.plan==='pro');
-  else if(uFilt==='pending')users=users.filter(u=>u.plan==='pending');
-  else if(uFilt==='free')users=users.filter(u=>!u.plan||u.plan==='free');
-  if(q)users=users.filter(u=>u.name?.toLowerCase().includes(q)||u.email?.toLowerCase().includes(q));
-  document.getElementById('users-tbody').innerHTML=users.length?users.map(u=>{
-    const trades=getUserTrades(u.id);
-    const disc=trades.length?Math.round(avgDisc(trades)):0;
-    const ws=wolfStage(disc);
-    return `<tr onclick="viewUser('${u.id}')">
-      <td class="bold">${u.name}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td>
-      <td style="font-family:var(--fm);">${trades.length}</td>
-      <td style="font-family:var(--fm);">${trades.length?disc+'%':'—'}</td>
-      <td>${ws.emoji} <span class="badge ${ws.cls}" style="font-size:9px;">${ws.label}</span></td>
-      <td style="font-size:11px;">${fmtDate(u.created_at)}</td>
-      <td onclick="event.stopPropagation()">
-        <div class="row-acts">
-          <button class="ra-btn ra-g" onclick="viewUser('${u.id}')">View</button>
-          ${u.plan!=='pro'?`<button class="ra-btn ra-g" onclick="grantPro('${u.id}')">Grant Pro</button>`:`<button class="ra-btn ra-a" onclick="revokePro('${u.id}')">Revoke</button>`}
-          <button class="ra-btn ra-r" onclick="deleteUser('${u.id}','${u.name.replace(/'/g,"\\'")}')">Del</button>
-        </div>
-      </td>
-    </tr>`;
-  }).join(''):'<tr><td colspan="8"><div class="empty-state"><div class="esi">👥</div>No users found</div></td></tr>';
+  const q = (document.getElementById('user-q')?.value || '').toLowerCase();
+  let users = getUsers();
+  if (uFilt === 'pro') users = users.filter(u => u.plan === 'pro');
+  else if (uFilt === 'pending') users = users.filter(u => u.plan === 'pending');
+  else if (uFilt === 'free') users = users.filter(u => !u.plan || u.plan === 'free');
+  if (q) users = users.filter(u => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
+  document.getElementById('users-tbody').innerHTML = users.length ? users.map(u => {
+    const trades = getUserTrades(u.id); const disc = trades.length ? Math.round(avgDisc(trades)) : 0; const ws = wolfStage(disc);
+    return `<tr onclick="viewUser('${u.id}')"><td class="bold">${u.name}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td><td style="font-family:var(--fm);">${trades.length}</td><td style="font-family:var(--fm);">${trades.length ? disc + '%' : '—'}</td><td>${ws.emoji} <span class="badge ${ws.cls}" style="font-size:9px;">${ws.label}</span></td><td style="font-size:11px;">${fmtDate(u.created_at)}</td><td onclick="event.stopPropagation()"><div class="row-acts"><button class="ra-btn ra-g" onclick="viewUser('${u.id}')">View</button>${u.plan !== 'pro' ? `<button class="ra-btn ra-g" onclick="grantPro('${u.id}')">Grant Pro</button>` : `<button class="ra-btn ra-a" onclick="revokePro('${u.id}')">Revoke</button>`}<button class="ra-btn ra-r" onclick="deleteUser('${u.id}','${u.name.replace(/'/g, "\\'")}')">Del</button></div></td></tr>`;
+  }).join('') : '<tr><td colspan="8"><div class="empty-state"><div class="esi">👥</div>No users found</div></td></tr>';
 }
 
-// ═══════════════════════════════
-// RENDER — SUBSCRIPTIONS
-// ═══════════════════════════════
 function renderSubs() {
-  const users = getUsers();
-  const pro = users.filter(u => u.plan === 'pro');
-  const pending = users.filter(u => u.plan === 'pending');
+  const users = getUsers(); const pro = users.filter(u => u.plan === 'pro'); const pending = users.filter(u => u.plan === 'pending');
   const mrr = pro.length * 299;
   document.getElementById('sub-active').textContent = pro.length;
   document.getElementById('sub-pending').textContent = pending.length;
   document.getElementById('sub-mrr').textContent = '₹' + mrr.toLocaleString('en-IN');
   document.getElementById('sub-arr').textContent = '₹' + (mrr * 12).toLocaleString('en-IN');
-
-  document.getElementById('pending-tbody').innerHTML=pending.length?pending.map(u=>`<tr>
-    <td class="bold">${u.name}</td><td>${u.email}</td>
-    <td style="font-size:11px;">${fmtDate(u.created_at)}</td>
-    <td><span style="font-family:var(--fm);font-weight:800;color:var(--amber);">₹99</span></td>
-    <td><span class="badge bg-a">PENDING UPI</span></td>
-    <td><div class="row-acts">
-      <button class="ra-btn ra-g" onclick="approvePending('${u.id}')">✅ Approve</button>
-      <button class="ra-btn ra-r" onclick="deleteUser('${u.id}','${u.name.replace(/'/g,"\\'")}')">✗ Reject</button>
-    </div></td>
-  </tr>`).join(''):`<tr><td colspan="6"><div class="empty-state"><div class="esi">✅</div>No pending — all clear!</div></td></tr>`;
-
-  let list=users;
-  if(sFilt==='pro')list=pro;
-  else if(sFilt==='pending')list=pending;
-  else if(sFilt==='free')list=users.filter(u=>!u.plan||u.plan==='free');
-  document.getElementById('subs-tbody').innerHTML=list.length?list.map(u=>{
-    const subDate=u.subscribed_at?new Date(u.subscribed_at):null;
-    const days=subDate?Math.floor((Date.now()-subDate.getTime())/86400000):999;
-    const billing=u.plan==='pro'?(days<30?'₹99 (1st month)':'₹299/mo'):u.plan==='pending'?'₹99 pending':'—';
-    return `<tr>
-      <td class="bold">${u.name}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td>
-      <td style="font-family:var(--fm);font-size:11px;">${billing}</td>
-      <td style="font-size:11px;">${fmtDate(u.subscribed_at||u.created_at)}</td>
-      <td>${u.plan==='pro'?'<span class="badge bg-g">ACTIVE</span>':u.plan==='pending'?'<span class="badge bg-a">PENDING</span>':'<span class="badge bg-m">FREE</span>'}</td>
-      <td><div class="row-acts">
-        ${u.plan==='pending'?`<button class="ra-btn ra-g" onclick="approvePending('${u.id}')">✅ Approve</button>`:''}
-        ${u.plan!=='pro'?`<button class="ra-btn ra-g" onclick="grantPro('${u.id}')">Grant Pro</button>`:`<button class="ra-btn ra-a" onclick="revokePro('${u.id}')">Revoke</button>`}
-      </div></td>
-    </tr>`;
-  }).join(''):'<tr><td colspan="7"><div class="empty-state"><div class="esi">💳</div>No subscriptions</div></td></tr>';
+  document.getElementById('pending-tbody').innerHTML = pending.length ? pending.map(u => `<tr><td class="bold">${u.name}</td><td>${u.email}</td><td style="font-size:11px;">${fmtDate(u.created_at)}</td><td><span style="font-family:var(--fm);font-weight:800;color:var(--amber);">₹99</span></td><td><span class="badge bg-a">PENDING UPI</span></td><td><div class="row-acts"><button class="ra-btn ra-g" onclick="approvePending('${u.id}')">✅ Approve</button><button class="ra-btn ra-r" onclick="deleteUser('${u.id}','${u.name.replace(/'/g, "\\'")}')">✗ Reject</button></div></td></tr>`).join('') : `<tr><td colspan="6"><div class="empty-state"><div class="esi">✅</div>No pending — all clear!</div></td></tr>`;
+  let list = users;
+  if (sFilt === 'pro') list = pro;
+  else if (sFilt === 'pending') list = pending;
+  else if (sFilt === 'free') list = users.filter(u => !u.plan || u.plan === 'free');
+  document.getElementById('subs-tbody').innerHTML = list.length ? list.map(u => {
+    const subDate = u.subscribed_at ? new Date(u.subscribed_at) : null;
+    const days = subDate ? Math.floor((Date.now() - subDate.getTime()) / 86400000) : 999;
+    const billing = u.plan === 'pro' ? (days < 30 ? '₹99 (1st month)' : '₹299/mo') : u.plan === 'pending' ? '₹99 pending' : '—';
+    return `<tr><td class="bold">${u.name}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td><td style="font-family:var(--fm);font-size:11px;">${billing}</td><td style="font-size:11px;">${fmtDate(u.subscribed_at || u.created_at)}</td><td>${u.plan === 'pro' ? '<span class="badge bg-g">ACTIVE</span>' : u.plan === 'pending' ? '<span class="badge bg-a">PENDING</span>' : '<span class="badge bg-m">FREE</span>'}</td><td><div class="row-acts">${u.plan === 'pending' ? `<button class="ra-btn ra-g" onclick="approvePending('${u.id}')">✅ Approve</button>` : ''}${u.plan !== 'pro' ? `<button class="ra-btn ra-g" onclick="grantPro('${u.id}')">Grant Pro</button>` : `<button class="ra-btn ra-a" onclick="revokePro('${u.id}')">Revoke</button>`}</div></td></tr>`;
+  }).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="esi">💳</div>No subscriptions</div></td></tr>';
 }
 
-// ═══════════════════════════════
-// RENDER — TRADES
-// ═══════════════════════════════
 function renderTrades() {
-  const all = getAllTrades().sort((a,b) => new Date(b.date||0) - new Date(a.date||0)).slice(0,50);
-  const totalPnl = all.reduce((a,t) => a + t.pnl, 0);
-  const wins = all.filter(t => t.pnl > 0).length;
+  const all = getAllTrades().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 50);
+  const totalPnl = all.reduce((a, t) => a + t.pnl, 0); const wins = all.filter(t => t.pnl > 0).length;
   document.getElementById('tr-total').textContent = all.length;
   document.getElementById('tr-pnl').textContent = (totalPnl >= 0 ? '+' : '-') + fmtMoney(totalPnl);
   document.getElementById('tr-disc').textContent = all.length ? Math.round(avgDisc(all)) + '%' : '—';
   document.getElementById('tr-wr').textContent = all.length ? Math.round(wins / all.length * 100) + '%' : '—';
-  document.getElementById('trades-tbody').innerHTML = all.length ? all.map(t => `<tr>
-    <td class="bold">${t._user||'—'}</td>
-    <td style="font-weight:700;">${t.symbol||'—'}</td>
-    <td style="font-family:var(--fm);font-size:11px;">${t.date||'—'}</td>
-    <td style="color:${t.pnl>=0?'var(--g1)':'var(--red)'};font-weight:700;font-family:var(--fm);">${t.pnl>=0?'+':''}₹${Math.abs(t.pnl)}</td>
-    <td style="font-family:var(--fm);">${(t.discScore||0).toFixed(0)}%</td>
-    <td>${t.emotion||'—'}</td>
-    <td>${t.setup||'—'}</td>
-  </tr>`).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="esi">📋</div>No trades yet</div></td></tr>';
+  document.getElementById('trades-tbody').innerHTML = all.length ? all.map(t => `<tr><td class="bold">${t._user || '—'}</td><td style="font-weight:700;">${t.symbol || '—'}</td><td style="font-family:var(--fm);font-size:11px;">${t.date || '—'}</td><td style="color:${t.pnl >= 0 ? 'var(--g1)' : 'var(--red)'};font-weight:700;font-family:var(--fm);">${t.pnl >= 0 ? '+' : ''}₹${Math.abs(t.pnl)}</td><td style="font-family:var(--fm);">${(t.discScore || 0).toFixed(0)}%</td><td>${t.emotion || '—'}</td><td>${t.setup || '—'}</td></tr>`).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="esi">📋</div>No trades yet</div></td></tr>';
 }
 
-// ═══════════════════════════════
-// RENDER — WOLF RANKINGS
-// ═══════════════════════════════
 function renderWolf() {
-  const users=getUsers();
-  const ranked=users.map(u=>{
-    const trades=getUserTrades(u.id);
-    const disc=trades.length?Math.round(avgDisc(trades)):0;
-    return {name:u.name,email:u.email,disc,trades:trades.length,stage:wolfStage(disc)};
-  }).sort((a,b)=>b.disc-a.disc);
-
-  const cubs = ranked.filter(r => r.disc < 40).length;
-  const wolves = ranked.filter(r => r.disc >= 40 && r.disc < 65).length;
-  const alphas = ranked.filter(r => r.disc >= 65 && r.disc < 85).length;
-  const legends = ranked.filter(r => r.disc >= 85).length;
-  document.getElementById('wf-cub').textContent = cubs;
-  document.getElementById('wf-wolf').textContent = wolves;
-  document.getElementById('wf-alpha').textContent = alphas;
-  document.getElementById('wf-legend').textContent = legends;
-
-  // Leaderboard
-  document.getElementById('wolf-lb').innerHTML = ranked.slice(0,10).length ? ranked.slice(0,10).map((r,i) => `
-    <div class="lb-item">
-      <span class="lb-rank">${i+1}</span>
-      <span class="lb-emoji">${r.stage.emoji}</span>
-      <div style="flex:1;min-width:0;">
-        <div class="lb-name">${r.name}</div>
-        <div class="lb-stage">${r.stage.label} · ${r.trades} trades</div>
-      </div>
-      <span class="lb-score">${r.disc}%</span>
-    </div>`).join('') : '<div class="empty-state"><div class="esi">🐺</div>No traders yet</div>';
-
-  // Distribution
-  const stages = [{label:'🐾 Cub (0–40%)',count:cubs,color:'var(--muted)'},{label:'🐺 Wolf (40–65%)',count:wolves,color:'var(--blue)'},{label:'⚡ Alpha (65–85%)',count:alphas,color:'var(--g1)'},{label:'🏆 Legendary (85–100%)',count:legends,color:'var(--amber)'}];
-  const maxC = Math.max(...stages.map(s=>s.count), 1);
-  document.getElementById('wolf-dist').innerHTML = stages.map(s => `
-    <div class="prog-row">
-      <div class="prog-hd"><span>${s.label}</span><span style="font-family:var(--fm);font-size:11px;">${s.count}</span></div>
-      <div class="prog-track"><div class="prog-fill" style="width:${Math.round(s.count/maxC*100)}%;background:${s.color};"></div></div>
-    </div>`).join('');
+  const users = getUsers();
+  const ranked = users.map(u => { const trades = getUserTrades(u.id); const disc = trades.length ? Math.round(avgDisc(trades)) : 0; return { name: u.name, email: u.email, disc, trades: trades.length, stage: wolfStage(disc) }; }).sort((a, b) => b.disc - a.disc);
+  const cubs = ranked.filter(r => r.disc < 40).length; const wolves = ranked.filter(r => r.disc >= 40 && r.disc < 65).length;
+  const alphas = ranked.filter(r => r.disc >= 65 && r.disc < 85).length; const legends = ranked.filter(r => r.disc >= 85).length;
+  document.getElementById('wf-cub').textContent = cubs; document.getElementById('wf-wolf').textContent = wolves;
+  document.getElementById('wf-alpha').textContent = alphas; document.getElementById('wf-legend').textContent = legends;
+  document.getElementById('wolf-lb').innerHTML = ranked.slice(0, 10).length ? ranked.slice(0, 10).map((r, i) => `<div class="lb-item"><span class="lb-rank">${i + 1}</span><span class="lb-emoji">${r.stage.emoji}</span><div style="flex:1;min-width:0;"><div class="lb-name">${r.name}</div><div class="lb-stage">${r.stage.label} · ${r.trades} trades</div></div><span class="lb-score">${r.disc}%</span></div>`).join('') : '<div class="empty-state"><div class="esi">🐺</div>No traders yet</div>';
+  const stages = [{ label: '🐾 Cub (0–40%)', count: cubs, color: 'var(--muted)' }, { label: '🐺 Wolf (40–65%)', count: wolves, color: 'var(--blue)' }, { label: '⚡ Alpha (65–85%)', count: alphas, color: 'var(--g1)' }, { label: '🏆 Legendary (85–100%)', count: legends, color: 'var(--amber)' }];
+  const maxC = Math.max(...stages.map(s => s.count), 1);
+  document.getElementById('wolf-dist').innerHTML = stages.map(s => `<div class="prog-row"><div class="prog-hd"><span>${s.label}</span><span style="font-family:var(--fm);font-size:11px;">${s.count}</span></div><div class="prog-track"><div class="prog-fill" style="width:${Math.round(s.count / maxC * 100)}%;background:${s.color};"></div></div></div>`).join('');
 }
 
-// ═══════════════════════════════
-// RENDER — REVENUE
-// ═══════════════════════════════
 function renderRevenue() {
-  const users = getUsers();
-  const pro = users.filter(u => u.plan === 'pro');
-  const mrr = pro.length * 299;
-  const arr = mrr * 12;
+  const users = getUsers(); const pro = users.filter(u => u.plan === 'pro');
+  const mrr = pro.length * 299; const arr = mrr * 12;
   const conv = users.length ? Math.round(pro.length / users.length * 100) : 0;
-  // Estimate total: first month ₹99 per sub, then ₹299
-  const estimated = pro.reduce((a,u) => {
-    const sub = u.subscribedAt ? new Date(u.subscribedAt) : null;
-    const days = sub ? Math.floor((Date.now()-sub.getTime())/86400000) : 0;
-    return a + (days >= 30 ? 99 + Math.floor(days/30)*299 : 99);
-  }, 0);
+  const estimated = pro.reduce((a, u) => { const sub = u.subscribed_at ? new Date(u.subscribed_at) : null; const days = sub ? Math.floor((Date.now() - sub.getTime()) / 86400000) : 0; return a + (days >= 30 ? 99 + Math.floor(days / 30) * 299 : 99); }, 0);
   document.getElementById('rv-total').textContent = '₹' + estimated.toLocaleString('en-IN');
   document.getElementById('rv-mrr').textContent = '₹' + mrr.toLocaleString('en-IN');
   document.getElementById('rv-arr').textContent = '₹' + arr.toLocaleString('en-IN');
   document.getElementById('rv-conv').textContent = conv + '%';
-
-  // Simulated monthly bars
-  const months = ['Sep','Oct','Nov','Dec','Jan','Feb'];
-  const vals = [0,0,0,0,Math.round(mrr*0.6),mrr].map((v,i) => i < 4 ? Math.round(mrr*(0.1+i*0.12)) : v);
+  const months = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
+  const vals = [0, 0, 0, 0, Math.round(mrr * 0.6), mrr].map((v, i) => i < 4 ? Math.round(mrr * (0.1 + i * 0.12)) : v);
   const maxV = Math.max(...vals, 1);
-  document.getElementById('rev-bars').innerHTML = months.map((m,i) => `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-      <span style="font-size:11px;color:var(--text2);width:26px;flex-shrink:0;">${m}</span>
-      <div style="flex:1;height:18px;background:var(--bg2);border-radius:4px;overflow:hidden;border:1px solid var(--border2);">
-        <div style="width:${Math.round(vals[i]/maxV*100)}%;height:100%;background:linear-gradient(90deg,var(--g2),var(--g1));border-radius:4px;display:flex;align-items:center;padding-left:8px;">
-          ${vals[i]>0?`<span style="font-size:10px;font-weight:700;color:#fff;">₹${vals[i].toLocaleString('en-IN')}</span>`:''}
-        </div>
-      </div>
-    </div>`).join('');
-
-  // Subscribers list
-  document.getElementById('rev-subs').innerHTML = pro.length ? pro.map(u => `
-    <div class="metric-row"><span class="metric-lbl">${u.name}</span><span class="metric-val" style="color:var(--g1);">₹299/mo</span></div>`).join('') : '<div class="empty-state"><div class="esi">💰</div>No pro subscribers yet</div>';
+  document.getElementById('rev-bars').innerHTML = months.map((m, i) => `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:11px;color:var(--text2);width:26px;flex-shrink:0;">${m}</span><div style="flex:1;height:18px;background:var(--bg2);border-radius:4px;overflow:hidden;border:1px solid var(--border2);"><div style="width:${Math.round(vals[i] / maxV * 100)}%;height:100%;background:linear-gradient(90deg,var(--g2),var(--g1));border-radius:4px;display:flex;align-items:center;padding-left:8px;">${vals[i] > 0 ? `<span style="font-size:10px;font-weight:700;color:#fff;">₹${vals[i].toLocaleString('en-IN')}</span>` : ''}</div></div></div>`).join('');
+  document.getElementById('rev-subs').innerHTML = pro.length ? pro.map(u => `<div class="metric-row"><span class="metric-lbl">${u.name}</span><span class="metric-val" style="color:var(--g1);">₹299/mo</span></div>`).join('') : '<div class="empty-state"><div class="esi">💰</div>No pro subscribers yet</div>';
 }
 
-// ═══════════════════════════════
-// USER ACTIONS
-// ═══════════════════════════════
 function viewUser(uid) {
-  const u=ALL_USERS.find(x=>x.id===uid); if(!u)return;
-  const trades=getUserTrades(uid);
-  const disc=trades.length?Math.round(avgDisc(trades)):0;
-  const ws=wolfStage(disc);
-  const wins=trades.filter(t=>t.pnl>0).length;
-  const totalPnl=trades.reduce((a,t)=>a+t.pnl,0);
-  document.getElementById('um-title').textContent=u.name;
-  document.getElementById('um-body').innerHTML=`
-    <div class="detail-grid">
-      <div class="detail-box"><label>Name</label><span>${u.name}</span></div>
-      <div class="detail-box"><label>Email</label><span style="font-size:11px;font-family:var(--fm);">${u.email}</span></div>
-      <div class="detail-box"><label>Plan</label><span>${planBadge(u.plan)}</span></div>
-      <div class="detail-box"><label>Wolf Rank</label><span>${ws.emoji} ${ws.label}</span></div>
-      <div class="detail-box"><label>Joined</label><span>${fmtDate(u.created_at)}</span></div>
-      <div class="detail-box"><label>Subscribed</label><span>${fmtDate(u.subscribed_at)}</span></div>
-      ${u.razorpay_payment_id?`<div class="detail-box"><label>Payment ID</label><span style="font-family:var(--fm);font-size:10px;">${u.razorpay_payment_id}</span></div>`:''}
-    </div>
-    <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Trading Stats</div>
-    <div class="detail-grid">
-      <div class="detail-box"><label>Total Trades</label><span style="font-family:var(--fm);">${trades.length}</span></div>
-      <div class="detail-box"><label>Win Rate</label><span style="font-family:var(--fm);color:var(--g1);">${trades.length?Math.round(wins/trades.length*100)+'%':'—'}</span></div>
-      <div class="detail-box"><label>Total P&L</label><span style="font-family:var(--fm);color:${totalPnl>=0?'var(--g1)':'var(--red)'};">${trades.length?(totalPnl>=0?'+':'-')+'₹'+Math.abs(totalPnl):'—'}</span></div>
-      <div class="detail-box"><label>Avg Discipline</label><span style="font-family:var(--fm);color:var(--g1);">${trades.length?disc+'%':'—'}</span></div>
-    </div>
-    ${trades.length?`<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;">Recent Trades</div>
-    <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r3);overflow:hidden;">
-      <table><thead><tr><th>Symbol</th><th>Date</th><th>P&L</th><th>Disc</th></tr></thead><tbody>
-        ${[...trades].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,4).map(t=>`<tr>
-          <td class="bold">${t.symbol}</td><td style="font-family:var(--fm);font-size:11px;">${t.date}</td>
-          <td style="color:${t.pnl>=0?'var(--g1)':'var(--red)'};font-weight:700;font-family:var(--fm);">${t.pnl>=0?'+':''}₹${Math.abs(t.pnl)}</td>
-          <td style="font-family:var(--fm);">${(t.discScore||0).toFixed(0)}%</td>
-        </tr>`).join('')}
-      </tbody></table>
-    </div>`:''}`;
-  const btn=document.getElementById('um-action-btn');
-  if(u.plan!=='pro'){btn.textContent='✅ Grant Pro';btn.className='btn btn-p';btn.onclick=()=>{grantPro(uid);closeM('user-modal');};}
-  else{btn.textContent='Revoke Pro';btn.className='btn btn-d';btn.onclick=()=>{revokePro(uid);closeM('user-modal');};}
+  const u = ALL_USERS.find(x => x.id === uid); if (!u) return;
+  const trades = getUserTrades(uid); const disc = trades.length ? Math.round(avgDisc(trades)) : 0;
+  const ws = wolfStage(disc); const wins = trades.filter(t => t.pnl > 0).length;
+  const totalPnl = trades.reduce((a, t) => a + t.pnl, 0);
+  document.getElementById('um-title').textContent = u.name;
+  document.getElementById('um-body').innerHTML = `<div class="detail-grid"><div class="detail-box"><label>Name</label><span>${u.name}</span></div><div class="detail-box"><label>Email</label><span style="font-size:11px;font-family:var(--fm);">${u.email}</span></div><div class="detail-box"><label>Plan</label><span>${planBadge(u.plan)}</span></div><div class="detail-box"><label>Wolf Rank</label><span>${ws.emoji} ${ws.label}</span></div><div class="detail-box"><label>Joined</label><span>${fmtDate(u.created_at)}</span></div><div class="detail-box"><label>Subscribed</label><span>${fmtDate(u.subscribed_at)}</span></div>${u.razorpay_payment_id ? `<div class="detail-box"><label>Payment ID</label><span style="font-family:var(--fm);font-size:10px;">${u.razorpay_payment_id}</span></div>` : ''}</div><div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Trading Stats</div><div class="detail-grid"><div class="detail-box"><label>Total Trades</label><span style="font-family:var(--fm);">${trades.length}</span></div><div class="detail-box"><label>Win Rate</label><span style="font-family:var(--fm);color:var(--g1);">${trades.length ? Math.round(wins / trades.length * 100) + '%' : '—'}</span></div><div class="detail-box"><label>Total P&L</label><span style="font-family:var(--fm);color:${totalPnl >= 0 ? 'var(--g1)' : 'var(--red)'};">${trades.length ? (totalPnl >= 0 ? '+' : '-') + '₹' + Math.abs(totalPnl) : '—'}</span></div><div class="detail-box"><label>Avg Discipline</label><span style="font-family:var(--fm);color:var(--g1);">${trades.length ? disc + '%' : '—'}</span></div></div>${trades.length ? `<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;">Recent Trades</div><div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r3);overflow:hidden;"><table><thead><tr><th>Symbol</th><th>Date</th><th>P&L</th><th>Disc</th></tr></thead><tbody>${[...trades].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 4).map(t => `<tr><td class="bold">${t.symbol}</td><td style="font-family:var(--fm);font-size:11px;">${t.date}</td><td style="color:${t.pnl >= 0 ? 'var(--g1)' : 'var(--red)'};font-weight:700;font-family:var(--fm);">${t.pnl >= 0 ? '+' : ''}₹${Math.abs(t.pnl)}</td><td style="font-family:var(--fm);">${(t.discScore || 0).toFixed(0)}%</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+  const btn = document.getElementById('um-action-btn');
+  if (u.plan !== 'pro') { btn.textContent = '✅ Grant Pro'; btn.className = 'btn btn-p'; btn.onclick = () => { grantPro(uid); closeM('user-modal'); }; }
+  else { btn.textContent = 'Revoke Pro'; btn.className = 'btn btn-d'; btn.onclick = () => { revokePro(uid); closeM('user-modal'); }; }
   openM('user-modal');
 }
 
-// (All action functions defined above in Supabase section)
-
-// ── MODALS ──
 function openM(id) { document.getElementById(id)?.classList.add('open'); }
 function closeM(id) { document.getElementById(id)?.classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target===m) m.classList.remove('open'); }));
-document.addEventListener('keydown', e => { if (e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); });
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open')); });
 
-// ── TOAST ──
-function toast(msg, type='s') {
+function toast(msg, type = 's') {
   const wrap = document.getElementById('toast-wrap');
   const el = document.createElement('div');
-  el.className = 'toast toast-'+type;
+  el.className = 'toast-item toast-' + type;
   el.textContent = msg;
   wrap.appendChild(el);
-  setTimeout(()=>el.classList.add('show'), 10);
-  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(), 300); }, 3500);
+  setTimeout(() => el.remove(), 3500);
 }
 </script>
 </body>
