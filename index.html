@@ -1622,7 +1622,7 @@ const fmt=v=>'₹'+Math.abs(v).toLocaleString('en-IN');
 
 function generateWolfInsights(trades){const insights=[];if(!trades.length)return insights;const emoMap={};trades.forEach(t=>{if(!emoMap[t.emotion])emoMap[t.emotion]={pnl:0,count:0};emoMap[t.emotion].pnl+=t.pnl;emoMap[t.emotion].count++;});const worstEmo=Object.entries(emoMap).sort((a,b)=>a[1].pnl-b[1].pnl)[0];if(worstEmo&&worstEmo[1].pnl<0)insights.push({ic:'🧠',text:`When you feel <strong>${worstEmo[0]}</strong>, avg P&L is ₹${Math.round(worstEmo[1].pnl/worstEmo[1].count).toLocaleString('en-IN')}. The wolf knows when not to hunt.`});const sesMap={};trades.forEach(t=>{if(!sesMap[t.session])sesMap[t.session]={pnl:0,count:0};sesMap[t.session].pnl+=t.pnl;sesMap[t.session].count++;});const worstSes=Object.entries(sesMap).filter(([k])=>k).sort((a,b)=>a[1].pnl-b[1].pnl)[0];if(worstSes&&worstSes[1].pnl<0)insights.push({ic:'⏰',text:`Your <strong>${worstSes[0]}</strong> session is bleeding money. Consider hunting in better conditions.`});const lowDiscLoss=trades.filter(t=>t.discScore<60&&t.pnl<0).length;const totalLow=trades.filter(t=>t.discScore<60).length;if(totalLow>2){const pct=Math.round(lowDiscLoss/totalLow*100);insights.push({ic:'⚠️',text:`<strong>${pct}%</strong> of your low-discipline trades result in losses. The checklist is not decoration.`});}const wr=Math.round(trades.filter(t=>t.pnl>0).length/trades.length*100);if(wr>=60)insights.push({ic:'🟢',text:`<strong>${wr}% win rate</strong> — excellent. Focus on maximizing R:R on winners.`});return insights.slice(0,4);}
 
-async function sbProfile(uid){const{data}=await sb.from('profiles').select('*').eq('id',uid).single();return data;}
+async function sbProfile(uid){const{data,error}=await sb.from('profiles').select('*').eq('id',uid).maybeSingle();if(error)console.warn('sbProfile error:',error.message);return data;}
 async function sbUpdateProfile(uid,obj){const{data}=await sb.from('profiles').update(obj).eq('id',uid).select().single();return data;}
 function parseJournal(x){let body=x.body||'';let ext={};const m=body.match(/<!--\s*ext:([\s\S]*?)-->/);if(m){try{ext=JSON.parse(m[1].trim());}catch(e){}body=body.replace(/<!--\s*ext:[\s\S]*?-->/,'').trim();}return{id:x.id,date:x.date,mood:x.mood,title:x.title,body,_ext:ext};}
 async function sbLoadData(uid){const[t,j,r]=await Promise.all([sb.from('trades').select('*').eq('user_id',uid).order('date',{ascending:false}),sb.from('journals').select('*').eq('user_id',uid).order('date',{ascending:false}),sb.from('rules').select('*').eq('user_id',uid).order('created_at')]);return{trades:(t.data||[]).map(dbToTrade),journals:(j.data||[]).map(parseJournal),rules:(r.data||[]).map(x=>({id:x.id,rule:x.rule,cat:x.category})),aiReports:[]};}
@@ -1641,8 +1641,18 @@ window.addEventListener('DOMContentLoaded',async()=>{
     const sessionPromise=sb.auth.getSession();const timeoutPromise=new Promise(r=>setTimeout(()=>r({data:{session:null},error:null}),5000));
     const{data:{session},error}=await Promise.race([sessionPromise,timeoutPromise]);clearTimeout(failsafeTimer);clearInterval(t);if(bar)bar.style.width='100%';await new Promise(r=>setTimeout(r,300));
     if(error||!session){goScreen('s-landing');return;}
-    const profile=await sbProfile(session.user.id);if(!profile){await sb.auth.signOut();goScreen('s-landing');return;}
-    CU=profile;CUD=await sbLoadData(session.user.id);
+    const profile=await sbProfile(session.user.id);
+    if(!profile){
+      // Profile नाही म्हणजे trigger ने create नाही केला — manually create करा
+      const {data:newProf}=await sb.from('profiles').upsert({
+        id:session.user.id,
+        email:session.user.email,
+        full_name:session.user.user_metadata?.full_name||session.user.email.split('@')[0],
+        plan:'free',role:'user'
+      },{onConflict:'id'}).select().maybeSingle();
+      if(!newProf){await sb.auth.signOut();goScreen('s-landing');return;}
+      CU=newProf;
+    } else { CU=profile; }CUD=await sbLoadData(session.user.id);
     initApp();
   } catch(e) {
     clearTimeout(failsafeTimer);
