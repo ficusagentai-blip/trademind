@@ -1,5 +1,5 @@
 // TradeMind — Wolf Service Worker
-const CACHE_NAME = 'trademind-v1';
+const CACHE_NAME = 'trademind-v2';
 const STATIC_CACHE = [
   '/',
   '/index.html',
