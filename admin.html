@@ -565,7 +565,7 @@ async function doLogin() {
   try {
     const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
     if(error)throw error;
-    const {data:prof}=await sb.from('profiles').select('role,name').eq('id',data.user.id).single();
+    const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',data.user.id).single();
     if(!prof||prof.role!=='admin'){
       await sb.auth.signOut();
       err.textContent='Access denied — admin only.'; err.style.display='block';
