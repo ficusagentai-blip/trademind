@@ -604,13 +604,13 @@ function startClock() {
 async function loadAll() {
   const [pr,tr]=await Promise.all([
     sb.from('profiles').select('*').order('created_at',{ascending:false}),
-    sb.from('trades').select('*, profiles(name,email)').order('date',{ascending:false})
+    sb.from('trades').select('*, profiles(full_name,email)').order('date',{ascending:false})
   ]);
   ALL_USERS = pr.data||[];
   ALL_TRADES = (tr.data||[]).map(t=>({
     ...t, pnl:Math.round(parseFloat(t.pnl||0)),
     discScore:parseFloat(t.disc_score||0), violated:t.violated||[],
-    _user:t.profiles?.name||'—', _email:t.profiles?.email||'—'
+    _user:t.profiles?.full_name||'—', _email:t.profiles?.email||'—'
   }));
 }
 function getUsers(){ return ALL_USERS; }
@@ -624,7 +624,7 @@ async function grantPro(uid) {
   const {error}=await sb.from('profiles').update({plan:'pro',subscribed_at:new Date().toISOString(),approved_by:'admin'}).eq('id',uid);
   if(error){toast('❌ '+error.message,'e');return;}
   const u=ALL_USERS.find(x=>x.id===uid); if(u){u.plan='pro';u.subscribed_at=new Date().toISOString();}
-  toast('✅ Pro granted to '+u?.name,'s'); renderUsers(); renderSubs();
+  toast('✅ Pro granted to '+u?.full_name,'s'); renderUsers(); renderSubs();
 }
 async function revokePro(uid) {
   const {error}=await sb.from('profiles').update({plan:'free'}).eq('id',uid);
@@ -645,7 +645,7 @@ async function approvePending(uid) {
   if(error){toast('❌ '+error.message,'e');return;}
   const u=ALL_USERS.find(x=>x.id===uid); if(u){u.plan='pro';u.subscribed_at=new Date().toISOString();}
   if(u?.email) await sendWelcomeResetEmail(u.email);
-  toast('✅ '+u?.name+' approved! Email sent 📧','s'); renderSubs();
+  toast('✅ '+u?.full_name+' approved! Email sent 📧','s'); renderSubs();
 }
 async function bulkApprove() {
   const pending=ALL_USERS.filter(u=>u.plan==='pending');
@@ -703,7 +703,7 @@ function openGrantModal() {
 }
 function exportSubs() {
   const rows=[['Name','Email','Plan','Subscribed','Payment ID'],
-    ...ALL_USERS.filter(u=>u.plan==='pro'||u.plan==='pending').map(u=>[u.name,u.email,u.plan,u.subscribed_at||'',u.razorpay_payment_id||''])];
+    ...ALL_USERS.filter(u=>u.plan==='pro'||u.plan==='pending').map(u=>[u.full_name||u.email,u.email,u.plan,u.subscribed_at||'',u.razorpay_payment_id||''])];
   const csv=rows.map(r=>r.join(',')).join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='subscribers.csv'; a.click(); toast('Exported CSV','s');
@@ -766,7 +766,7 @@ function renderOverview() {
   // Recent signups
   const recent=[...users].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,8);
   document.getElementById('ov-signups').innerHTML=recent.length?recent.map(u=>`<tr>
-    <td class="bold">${u.name}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td><td>${fmtDate(u.created_at)}</td>
+    <td class="bold">${u.full_name||u.email}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td><td>${fmtDate(u.created_at)}</td>
   </tr>`).join(''):'<tr><td colspan="4"><div class="empty-state"><div class="esi">👥</div>No users yet</div></td></tr>';
 
   // Plan distribution
@@ -802,13 +802,13 @@ function renderUsers() {
   if(uFilt==='pro')users=users.filter(u=>u.plan==='pro');
   else if(uFilt==='pending')users=users.filter(u=>u.plan==='pending');
   else if(uFilt==='free')users=users.filter(u=>!u.plan||u.plan==='free');
-  if(q)users=users.filter(u=>u.name?.toLowerCase().includes(q)||u.email?.toLowerCase().includes(q));
+  if(q)users=users.filter(u=>u.full_name?.toLowerCase().includes(q)||u.email?.toLowerCase().includes(q));
   document.getElementById('users-tbody').innerHTML=users.length?users.map(u=>{
     const trades=getUserTrades(u.id);
     const disc=trades.length?Math.round(avgDisc(trades)):0;
     const ws=wolfStage(disc);
     return `<tr onclick="viewUser('${u.id}')">
-      <td class="bold">${u.name}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td>
+      <td class="bold">${u.full_name||u.email}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td>
       <td style="font-family:var(--fm);">${trades.length}</td>
       <td style="font-family:var(--fm);">${trades.length?disc+'%':'—'}</td>
       <td>${ws.emoji} <span class="badge ${ws.cls}" style="font-size:9px;">${ws.label}</span></td>
@@ -817,7 +817,7 @@ function renderUsers() {
         <div class="row-acts">
           <button class="ra-btn ra-g" onclick="viewUser('${u.id}')">View</button>
           ${u.plan!=='pro'?`<button class="ra-btn ra-g" onclick="grantPro('${u.id}')">Grant Pro</button>`:`<button class="ra-btn ra-a" onclick="revokePro('${u.id}')">Revoke</button>`}
-          <button class="ra-btn ra-r" onclick="deleteUser('${u.id}','${u.name.replace(/'/g,"\\'")}')">Del</button>
+          <button class="ra-btn ra-r" onclick="deleteUser('${u.id}','${u.full_name||u.email.replace(/'/g,"\\'")}')">Del</button>
         </div>
       </td>
     </tr>`;
@@ -838,13 +838,13 @@ function renderSubs() {
   document.getElementById('sub-arr').textContent = '₹' + (mrr * 12).toLocaleString('en-IN');
 
   document.getElementById('pending-tbody').innerHTML=pending.length?pending.map(u=>`<tr>
-    <td class="bold">${u.name}</td><td>${u.email}</td>
+    <td class="bold">${u.full_name||u.email}</td><td>${u.email}</td>
     <td style="font-size:11px;">${fmtDate(u.created_at)}</td>
     <td><span style="font-family:var(--fm);font-weight:800;color:var(--amber);">₹99</span></td>
     <td><span class="badge bg-a">PENDING UPI</span></td>
     <td><div class="row-acts">
       <button class="ra-btn ra-g" onclick="approvePending('${u.id}')">✅ Approve</button>
-      <button class="ra-btn ra-r" onclick="deleteUser('${u.id}','${u.name.replace(/'/g,"\\'")}')">✗ Reject</button>
+      <button class="ra-btn ra-r" onclick="deleteUser('${u.id}','${u.full_name||u.email.replace(/'/g,"\\'")}')">✗ Reject</button>
     </div></td>
   </tr>`).join(''):`<tr><td colspan="6"><div class="empty-state"><div class="esi">✅</div>No pending — all clear!</div></td></tr>`;
 
@@ -857,7 +857,7 @@ function renderSubs() {
     const days=subDate?Math.floor((Date.now()-subDate.getTime())/86400000):999;
     const billing=u.plan==='pro'?(days<30?'₹99 (1st month)':'₹299/mo'):u.plan==='pending'?'₹99 pending':'—';
     return `<tr>
-      <td class="bold">${u.name}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td>
+      <td class="bold">${u.full_name||u.email}</td><td>${u.email}</td><td>${planBadge(u.plan)}</td>
       <td style="font-family:var(--fm);font-size:11px;">${billing}</td>
       <td style="font-size:11px;">${fmtDate(u.subscribed_at||u.created_at)}</td>
       <td>${u.plan==='pro'?'<span class="badge bg-g">ACTIVE</span>':u.plan==='pending'?'<span class="badge bg-a">PENDING</span>':'<span class="badge bg-m">FREE</span>'}</td>
@@ -899,7 +899,7 @@ function renderWolf() {
   const ranked=users.map(u=>{
     const trades=getUserTrades(u.id);
     const disc=trades.length?Math.round(avgDisc(trades)):0;
-    return {name:u.name,email:u.email,disc,trades:trades.length,stage:wolfStage(disc)};
+    return {name:u.full_name||u.email,email:u.email,disc,trades:trades.length,stage:wolfStage(disc)};
   }).sort((a,b)=>b.disc-a.disc);
 
   const cubs = ranked.filter(r => r.disc < 40).length;
@@ -917,7 +917,7 @@ function renderWolf() {
       <span class="lb-rank">${i+1}</span>
       <span class="lb-emoji">${r.stage.emoji}</span>
       <div style="flex:1;min-width:0;">
-        <div class="lb-name">${r.name}</div>
+        <div class="lb-name">${r.full_name||r.email}</div>
         <div class="lb-stage">${r.stage.label} · ${r.trades} trades</div>
       </div>
       <span class="lb-score">${r.disc}%</span>
@@ -969,7 +969,7 @@ function renderRevenue() {
 
   // Subscribers list
   document.getElementById('rev-subs').innerHTML = pro.length ? pro.map(u => `
-    <div class="metric-row"><span class="metric-lbl">${u.name}</span><span class="metric-val" style="color:var(--g1);">₹299/mo</span></div>`).join('') : '<div class="empty-state"><div class="esi">💰</div>No pro subscribers yet</div>';
+    <div class="metric-row"><span class="metric-lbl">${u.full_name||u.email}</span><span class="metric-val" style="color:var(--g1);">₹299/mo</span></div>`).join('') : '<div class="empty-state"><div class="esi">💰</div>No pro subscribers yet</div>';
 }
 
 // ═══════════════════════════════
@@ -982,10 +982,10 @@ function viewUser(uid) {
   const ws=wolfStage(disc);
   const wins=trades.filter(t=>t.pnl>0).length;
   const totalPnl=trades.reduce((a,t)=>a+t.pnl,0);
-  document.getElementById('um-title').textContent=u.name;
+  document.getElementById('um-title').textContent=u.full_name||u.email;
   document.getElementById('um-body').innerHTML=`
     <div class="detail-grid">
-      <div class="detail-box"><label>Name</label><span>${u.name}</span></div>
+      <div class="detail-box"><label>Name</label><span>${u.full_name||u.email}</span></div>
       <div class="detail-box"><label>Email</label><span style="font-size:11px;font-family:var(--fm);">${u.email}</span></div>
       <div class="detail-box"><label>Plan</label><span>${planBadge(u.plan)}</span></div>
       <div class="detail-box"><label>Wolf Rank</label><span>${ws.emoji} ${ws.label}</span></div>
