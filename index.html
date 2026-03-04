@@ -1630,15 +1630,37 @@ function dbToTrade(t){return{id:t.id,date:t.date,symbol:t.symbol,setup:t.setup,s
 function tradeToDb(uid,t){return{user_id:uid,date:t.date,symbol:t.symbol,setup:t.setup,side:t.side,entry:t.entry,exit:t.exit,qty:t.qty,sl:t.sl||null,target:t.target||null,pnl:t.pnl,session:t.session,instrument:t.inst,notes:t.notes,disc_score:t.discScore,violated:t.violated||[],exec_notes:t.execNotes,confidence:t.confidence,focus:t.focus,patience:t.patience,calm:t.calm,emotion:t.emotion,psych_notes:t.psychNotes,lesson:t.lesson};}
 
 window.addEventListener('DOMContentLoaded',async()=>{
-  const failsafeTimer=setTimeout(()=>{const l=document.getElementById('s-loading');if(l&&l.classList.contains('active')){l.classList.remove('active');document.getElementById('s-landing').classList.add('active');}},7000);
+  const failsafeTimer=setTimeout(()=>{const l=document.getElementById('s-loading');if(l&&l.classList.contains('active')){l.classList.remove('active');document.getElementById('s-landing').classList.add('active');}},12000);
   const saved=localStorage.getItem('tf_theme')||'dark';document.documentElement.setAttribute('data-theme',saved);updateThemeUI(saved);
   let p=0;const bar=document.getElementById('loadBar');const statuses=['Awakening the wolf...','Loading discipline system...','Connecting to pack...','Almost ready...'];let si=0;
   const t=setInterval(()=>{p=Math.min(p+12,85);if(bar)bar.style.width=p+'%';if(p%25===0&&si<statuses.length){const el=document.getElementById('loadStatus');if(el)el.textContent=statuses[si++];}},80);
   const hash=window.location.hash;
   const urlParams=new URLSearchParams(window.location.search);const isWelcome=urlParams.get('welcome')==='1';if(hash&&hash.includes('access_token')&&hash.includes('type=recovery')){clearTimeout(failsafeTimer);clearInterval(t);if(bar)bar.style.width='100%';await new Promise(r=>setTimeout(r,800));document.getElementById('s-loading').classList.remove('active');const rsEl=document.getElementById('s-reset');rsEl.classList.add('active');if(isWelcome){const subEl=rsEl.querySelector('.reset-head-sub');if(subEl)subEl.textContent='Welcome to TradeMind! Set your password to begin.';const msgEl=rsEl.querySelector('.reset-msg');if(msgEl)msgEl.innerHTML='Payment approved! Set your new password and start your Wolf journey.';}history.replaceState(null,'',window.location.pathname);return;}
-  sb.auth.onAuthStateChange(async(event,session)=>{if(event==='SIGNED_OUT'||event==='TOKEN_REFRESH_ERROR'){CU=null;CUD=null;goScreen('s-landing');return;}if(event==='USER_UPDATED'&&session){try{CU=await sbProfile(session.user.id);}catch(e){}}});
+  // Magic link — onAuthStateChange SIGNED_IN event handle करेल
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_OUT'||event==='TOKEN_REFRESH_ERROR'){CU=null;CUD=null;goScreen('s-landing');return;}
+    if(event==='USER_UPDATED'&&session){try{CU=await sbProfile(session.user.id);}catch(e){}}
+    if(event==='SIGNED_IN'&&session&&!CU){
+      // Magic link login — handle here
+      clearTimeout(failsafeTimer);clearInterval(t);
+      if(bar)bar.style.width='100%';
+      try{
+        const profile=await sbProfile(session.user.id);
+        if(!profile){
+          await sb.from('profiles').upsert({id:session.user.id,email:session.user.email,full_name:session.user.user_metadata?.full_name||session.user.email.split('@')[0],plan:'free',role:'user'},{onConflict:'id'});
+          CU=await sbProfile(session.user.id);
+        } else { CU=profile; }
+        if(CU){
+          CUD=await sbLoadData(session.user.id);
+          const plan=CU.plan||'free';
+          if(plan==='pro'||CU.role==='admin'){history.replaceState(null,'',window.location.pathname);goScreen('s-app');initApp();}
+          else{goScreen('s-sub');}
+        }
+      }catch(e){goScreen('s-landing');}
+    }
+  });
   try{
-    const sessionPromise=sb.auth.getSession();const timeoutPromise=new Promise(r=>setTimeout(()=>r({data:{session:null},error:null}),5000));
+    const sessionPromise=sb.auth.getSession();const timeoutPromise=new Promise(r=>setTimeout(()=>r({data:{session:null},error:null}),8000));
     const{data:{session},error}=await Promise.race([sessionPromise,timeoutPromise]);clearTimeout(failsafeTimer);clearInterval(t);if(bar)bar.style.width='100%';await new Promise(r=>setTimeout(r,300));
     if(error||!session){goScreen('s-landing');return;}
     const profile=await sbProfile(session.user.id);
@@ -1653,7 +1675,10 @@ window.addEventListener('DOMContentLoaded',async()=>{
       if(!newProf){await sb.auth.signOut();goScreen('s-landing');return;}
       CU=newProf;
     } else { CU=profile; }CUD=await sbLoadData(session.user.id);
-    initApp();
+    const plan=CU.plan||'free';
+    if(plan==='pro'||CU.role==='admin'){goScreen('s-app');initApp();}
+    else if(plan==='free'||plan==='trial'){goScreen('s-sub');}
+    else{goScreen('s-sub');} // pending_activation etc
   } catch(e) {
     clearTimeout(failsafeTimer);
     goScreen('s-landing');
@@ -1776,8 +1801,9 @@ async function doLogin() {
   CU=await sbProfile(user.id);
   if(!CU){await sb.auth.signOut();showAuthErr('Profile not found');return;}
   CUD=await sbLoadData(user.id);
-  goScreen('s-app');
-  initApp();
+  const plan=CU.plan||'free';
+  if(plan==='pro'||CU.role==='admin'){goScreen('s-app');initApp();}
+  else{goScreen('s-sub');}
 }
 
 async function doRegister() {
